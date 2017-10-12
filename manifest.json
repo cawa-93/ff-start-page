@@ -1,0 +1,18 @@
+{
+  "manifest_version": 2,
+  "version": "1.2",
+  "name": "Start page",
+  "description": "Adds a red border to all webpages matching mozilla.org.",
+
+  "chrome_settings_overrides": {
+    "homepage": "index.html"
+  },
+  "chrome_url_overrides" : {
+    "newtab": "index.html"
+  },
+  "permissions": [
+    "history",
+    "<all_urls>"
+  ],
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self';"
+}
