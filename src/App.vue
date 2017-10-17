@@ -18,6 +18,7 @@ export default {
 	},
 	computed: {
 		bookmarks() {
+			// this.items.map(console.log)
 			return this.items.map(({data: site}) => {
 				const bookmark = {
 					url: site.url,
@@ -50,12 +51,22 @@ export default {
 		},
 		items () {
 			if (!this.itemsMap.length) return []
-			let items = new Set()
-			let mapIndex = 0
-			do {
-				this.itemsMap[mapIndex++].forEach(item => items.add(item[1]))
-			} while (items.size < this.linkOnPage && mapIndex < this.itemsMap.length)
-			return [...items.entries()].slice(0, this.linkOnPage).map((item) => item[0])
+			let items = new Map()
+			for (var i = 0; i < this.itemsMap.length; i++) {
+				if (!this.itemsMap[i]) continue
+
+				for (var d = 0; d < this.itemsMap[i].length; d++) {
+					if (!this.itemsMap[i][d]) continue
+
+					if (items.size < this.linkOnPage) {
+						items.set(this.itemsMap[i][d][0], this.itemsMap[i][d][1])
+					} else {
+						return [...items.entries()].map(set => set[1])
+					}
+				}
+			}
+
+			return [...items.entries()].map(set => set[0])
 		},
 		itemsMap() {
 			if (!this.history) return []
@@ -65,8 +76,12 @@ export default {
 				.forEach(item => {
 					const [url, protocol, domain] = item.url.match(/(https?):\/\/(?:www\.)?([^/]+)/)
 					const lastVisitTime = new Date(item.lastVisitTime)
-
 					const now = new Date()
+
+					if (now.getDay() !== lastVisitTime.getDay()) {
+						return
+					}
+
 					const mapIndex = this.getHourDiff(now.getHours(), lastVisitTime.getHours())
 
 					if (!itemsMap[mapIndex]) {
@@ -74,18 +89,18 @@ export default {
 					}
 
 					if (!itemsMap[mapIndex].has(domain)) {
-						itemsMap[mapIndex].set(domain, {data: {url, protocol, domain}, count: 0})
+						itemsMap[mapIndex].set(domain, {data: {url, protocol, domain}, rating: 0, visitCount: 0})
 					}
 
-					let {data, count} = itemsMap[mapIndex].get(domain)
-					count = count + 1 + item.visitCount/10 + (item.typedCount || 0)/2
-					itemsMap[mapIndex].set(domain, {data, count})
+					let {data, rating, visitCount} = itemsMap[mapIndex].get(domain)
+					rating = rating + 1 + item.visitCount/10 + (item.typedCount || 0)/2 + 30 / ((now - lastVisitTime)/86400000)
+					itemsMap[mapIndex].set(domain, {data, rating, visitCount: ++visitCount})
 				})
 
 			return itemsMap.map(map => (
 				[...map.entries()]
-					.filter(([,{count}]) => count > 1)
-					.sort(([,{count: count1}], [,{count: count2}]) => count2 - count1))
+					.filter(([,{visitCount}]) => visitCount > 1)
+					.sort(([,{rating: rating1}], [,{rating: rating2}]) => rating2 - rating1))
 			)
 		}
 	},
@@ -99,10 +114,11 @@ export default {
 		}
 	},
 	mounted() {
+		const now = new Date()
 		browser.history.search({
 			text: '',
-			endTime : '2017-10-05',
-			startTime: '2017-09-05',
+			endTime : now, // Now
+			startTime: now - 86400000*30, // 30 days ago
 			maxResults: 999999999999 // all items
 		}).then(h => {
 			this.history = h
