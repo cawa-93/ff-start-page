@@ -1,8 +1,15 @@
 {
+  "applications": {
+    "gecko": {
+      "strict_min_version": "57.0"
+    }
+  },
   "manifest_version": 2,
-  "version": "1.2",
-  "name": "Start page",
-  "description": "Adds a red border to all webpages matching mozilla.org.",
+
+  "version": "0.3",
+  "name": "Smart Start page",
+  "description": "Forms recommendations on the start page based on your preferences.",
+
 
   "chrome_settings_overrides": {
     "homepage": "index.html"
@@ -13,6 +20,5 @@
   "permissions": [
     "history",
     "<all_urls>"
-  ],
-  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self';"
+  ]
 }
